@@ -30,10 +30,10 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  let shortUrl = generateRandomString();
+  const shortUrl = generateRandomString();
   urlDatabase[shortUrl] = req.body.longURL;
   console.log(urlDatabase);
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${shortUrl}`); // Redirect to the newly created url page
 });
 
 app.get("/urls/new", (req, res) => {
