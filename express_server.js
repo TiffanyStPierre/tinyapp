@@ -47,9 +47,8 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
-  const templateVars = {id: req.params.id};
   if (longURL === undefined) {
-    res.render("not_found", templateVars);
+    res.status(404).render("not_found");
   } else {
     res.redirect(longURL);
   }
