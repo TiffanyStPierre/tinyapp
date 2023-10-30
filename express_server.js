@@ -45,12 +45,14 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  const templateVars = {id: req.params.id};
+  if (longURL === undefined) {
+    res.render("not_found", templateVars);
+  } else {
+    res.redirect(longURL);
+  }
 });
 
 app.listen(PORT, () => {
