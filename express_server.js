@@ -14,6 +14,7 @@ const generateRandomString = function() {
   for (let i = 0; i < 6; i++) {
     randomString += characters.charAt(Math.floor(Math.random() * characters.length));
   }
+
   return randomString;
 };
 
@@ -29,6 +30,9 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
+  let shortUrl = generateRandomString();
+  urlDatabase[shortUrl] = req.body.longURL;
+  console.log(urlDatabase);
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
