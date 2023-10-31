@@ -67,6 +67,12 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+app.post("/login", (req, res) => {
+  const userName = req.body.username;
+  res.cookie('username', userName);
+  res.redirect("/urls");
+})
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
