@@ -70,6 +70,12 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  const currentUser = users[req.cookies["user_id"]];
+  const templateVars = { user: currentUser };
+  res.render("login", templateVars);
+});
+
 app.get("/register", (req, res) => {
   const currentUser = users[req.cookies["user_id"]];
   const templateVars = { user: currentUser };
