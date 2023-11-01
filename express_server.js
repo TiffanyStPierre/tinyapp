@@ -85,9 +85,9 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send('Email and password must not be blank');
-  } else if (getUserIdFromEmail(req.body.email) !== null){
+  } else if (getUserIdFromEmail(req.body.email) !== null) {
     res.status(400).send('Email is already registered. Please login instead.');
-  }else {
+  } else {
     const userId = generateRandomString();
     users[userId] = {
       id: userId,
@@ -129,14 +129,23 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const currentUserEmail = req.body.userEmail;
-  const currentUserId = getUserIdFromEmail(currentUserEmail);
-  res.cookie('user_id', currentUserId);
-  res.redirect("/urls");
+  const loginUserId = getUserIdFromEmail(currentUserEmail);
+  if (loginUserId === null) {
+    res.status(403).send('Cannot find a user with that email address. Please enter a valid user email address or register to become a user.');
+  } else if (loginUserId !== null) {
+    if (users[loginUserId].password !== req.body.password) {
+      res.status(403).send('Invalid password. Please enter a valid password.');
+    } else if (users[loginUserId].password === req.body.password) {
+      const currentUserId = getUserIdFromEmail(currentUserEmail);
+      res.cookie('user_id', currentUserId);
+      res.redirect("/urls");
+    }
+  }
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.listen(PORT, () => {
