@@ -24,19 +24,19 @@
         </tr>
       </thead>
       <tbody>
-        <% for (let id in urls) { %>
+        <% for (let i = 0; i < urls.length; i++) { %>
           <tr>
             <td>
-              <%= id %>
+              <%= urls[i].id %>
             </td>
             <td>
-              <%= urls[id] %>
+              <%= urls[i].longURL %>
             </td>
             <td>
-                <a type="button" class="btn btn-outline-primary" href="/urls/<%= id %>">Edit</a>
+                <a type="button" class="btn btn-outline-primary" href="/urls/<%= urls[i].id %>">Edit</a>
             </td>
             <td>
-              <form method="POST" action="/urls/<%= id %>/delete">
+              <form method="POST" action="/urls/<%= urls[i].id %>/delete">
                 <button type="submit" class="btn btn-outline-danger">Delete</button>
               </form>
             </td>
