@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 
@@ -24,12 +25,12 @@ const users = {
   aJ48lW: {
     id: "aJ48lW",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10),
   },
   kJ4flL: {
     id: "kJ4flL",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", 10),
   },
 };
 
@@ -132,11 +133,13 @@ app.post("/register", (req, res) => {
     return res.status(400).send('<h3>Email is already registered. Please login instead.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else {
     const userId = generateRandomString();
+    const hashedPassword = bcrypt.hashSync(req.body.password);
     users[userId] = {
       id: userId,
       email: req.body.email,
-      password: req.body.password
+      password: hashedPassword
     };
+    console.log(users);
     res.cookie('user_id', userId);
     res.redirect("/urls"); // Redirect to the newly created url page
   }
@@ -228,12 +231,13 @@ app.get("/u/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const currentUserEmail = req.body.userEmail;
   const loginUserId = getUserIdFromEmail(currentUserEmail);
+  const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   if (loginUserId === null) {
     return res.status(403).send('<h3>Cannot find a user with that email address. Please enter a valid user email address or register to become a user.</h3></br></br><a href="/login">Go Back To Login Page</a>');
   } else if (loginUserId !== null) {
-    if (users[loginUserId].password !== req.body.password) {
+    if (bcrypt.compareSync(users[loginUserId].password, hashedPassword)) {
       return res.status(403).send('<h3>Invalid password. Please enter a valid password.</h3></br></br><a href="/login">Go Back To Login Page</a>');
-    } else if (users[loginUserId].password === req.body.password) {
+    } else if (!bcrypt.compareSync(users[loginUserId].password, hashedPassword)) {
       const currentUserId = getUserIdFromEmail(currentUserEmail);
       res.cookie('user_id', currentUserId);
       res.redirect("/urls");
