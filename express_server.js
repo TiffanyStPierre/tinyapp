@@ -1,4 +1,4 @@
-const { getUserIdFromEmail } = require('./helpers.js');
+const { getUserIdFromEmail, generateRandomString, urlsForUser } = require('./helpers.js');
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -38,38 +38,12 @@ const users = {
   },
 };
 
-const generateRandomString = function() {
-  let randomString = '';
-  const characters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (let i = 0; i < 6; i++) {
-    randomString += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-
-  return randomString;
-};
-
-
-
-const urlsForUser = function(id) {
-  let userUrlList = [];
-
-  for (const urlId in urlDatabase) {
-    const urlData = urlDatabase[urlId];
-    if (id === urlDatabase[urlId].userID) {
-      userUrlList.push({ id: urlId, ...urlData });
-    }
-  }
-  return userUrlList;
-};
-
 app.get("/urls", (req, res) => {
   const currentUser = users[req.session.user_id];
   if (!currentUser) {
     return res.send('<h3>You must be logged in to view your urls.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else if (currentUser) {
-    const userUrls = urlsForUser(currentUser.id);
+    const userUrls = urlsForUser(currentUser.id, urlDatabase);
     const templateVars = { urls: userUrls, user: currentUser };
     res.render("urls_index", templateVars);
   }
@@ -135,7 +109,7 @@ app.post("/register", (req, res) => {
       password: hashedPassword
     };
     console.log(users);
-    res.session.user_id = userId;
+    req.session.user_id = userId;
     res.redirect("/urls"); // Redirect to the newly created url page
   }
 });
@@ -147,7 +121,7 @@ app.get("/urls/:id", (req, res) => {
   if (!currentUser) {
     return res.send('<h3>You must be logged in to view your urls.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else if (currentUser) {
-    const userUrls = urlsForUser(currentUser.id);
+    const userUrls = urlsForUser(currentUser.id, urlDatabase);
     console.log(userUrls);
     let allowUser = false;
     userUrls.forEach(url => {
@@ -170,7 +144,7 @@ app.post("/urls/:id/delete", (req, res) => {
   if (!currentUser) {
     return res.send('<h3>You must be logged in to delete a url.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else if (currentUser) {
-    const userUrls = urlsForUser(currentUser.id);
+    const userUrls = urlsForUser(currentUser.id, urlDatabase);
     console.log(userUrls);
     let allowUser = false;
     userUrls.forEach(url => {
@@ -195,7 +169,7 @@ app.post("/urls/:id", (req, res) => {
   if (!currentUser) {
     return res.send('<h3>You must be logged in to edit a url.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else if (currentUser) {
-    const userUrls = urlsForUser(currentUser.id);
+    const userUrls = urlsForUser(currentUser.id, urlDatabase);
     console.log(userUrls);
     let allowUser = false;
     userUrls.forEach(url => {
