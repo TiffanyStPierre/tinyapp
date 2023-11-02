@@ -1,18 +1,23 @@
-const { getUserIdFromEmail, generateRandomString, urlsForUser } = require('./helpers.js');
+const { getUserIdFromEmail, generateRandomString, urlsForUser } = require('./helpers.js'); // import helper functions from helpers file
 const express = require("express");
-const app = express();
+const app = express(); // use express
 const PORT = 8080; // default port 8080
-const cookieSession = require('cookie-session');
-const bcrypt = require("bcryptjs");
+const cookieSession = require('cookie-session'); // use for cookie encryption
+const bcrypt = require("bcryptjs"); // use for password hashing
 
-app.set("view engine", "ejs");
+app.set("view engine", "ejs"); // use ejs templates
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // use for response body parsing
 
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
+
+// Server started up and listening
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
 
 // OBJECTS REPRESENTING PROJECT DATABASES
 
@@ -40,8 +45,22 @@ const users = {
   },
 };
 
-//GET AND POST REQUESTS
+// GET AND POST REQUESTS
 
+// Accessing homepage (index) in the browser redirects to another page. Different pages if user is logged in already or not.
+app.get("/", (req, res) => {
+  const currentUser = users[req.session.user_id];
+
+  if (!currentUser) {
+    return res.redirect("/login");
+  }
+
+  if (currentUser) {
+    return res.redirect("/urls");
+  }
+});
+
+// Accessing /urls in browser returns a list of user's urls if they are logged in.
 app.get("/urls", (req, res) => {
   const currentUser = users[req.session.user_id];
 
@@ -56,6 +75,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
+// Create a new url. If logged in, new url object is created and added to the database with a new random id.
 app.post("/urls", (req, res) => {
   const currentUser = users[req.session.user_id];
 
@@ -75,6 +95,7 @@ app.post("/urls", (req, res) => {
   }
 });
 
+// Accessing /urls/new in browser returns a page with a form to create a new url.
 app.get("/urls/new", (req, res) => {
   const currentUser = users[req.session.user_id];
   const templateVars = { user: currentUser };
@@ -88,18 +109,17 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+// Accessing /urls/:id in browser returns the details of a user's specific short url if they are logged in.
 app.get("/urls/:id", (req, res) => {
   const currentUser = users[req.session.user_id];
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: currentUser };
 
   if (!currentUser) {
     return res.send('<h3>You must be logged in to view your urls.</h3></br></br><a href="/login">Go To Login Page</a>');
   }
-
+  
   if (currentUser) {
     const userUrls = urlsForUser(currentUser.id, urlDatabase);
     let allowUser = false;
-
     userUrls.forEach(url => {
       if (url.id === req.params.id) {
         allowUser = true;
@@ -107,13 +127,15 @@ app.get("/urls/:id", (req, res) => {
     });
 
     if (allowUser) {
+      const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: currentUser };
       return res.render("urls_show", templateVars);
     } else {
-      return res.send('<h3>This url belongs to another user. Please create your own new url.</h3></br></br><a href="/urls/new">Create new url</a>');
+      res.send('<h3>This url belongs to another user. Please create your own new url.</h3></br></br><a href="/urls/new">Create new url</a>');
     }
   }
 });
 
+// Delete a url if the user is logged in and it's their url.
 app.post("/urls/:id/delete", (req, res) => {
   const currentUrlId = req.params.id;
   const currentUser = users[req.session.user_id];
@@ -141,6 +163,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
+// Edit a url if the user is logged in and it's their url.
 app.post("/urls/:id", (req, res) => {
   const newLongUrl = req.body.longURL;
   const shortUrl = req.params.id;
@@ -169,31 +192,20 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
+// Access a long url by putting the short url in the browser. Anyone can access, whether logged in or not.
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
   const currentUser = users[req.session.user_id];
   const templateVars = { user: currentUser };
 
-  if (longURL === undefined) {
+  if (urlDatabase[req.params.id] === undefined) {
     return res.status(404).render("not_found", templateVars);
   } else {
+    const longURL = urlDatabase[req.params.id].longURL;
     return res.redirect(longURL);
   }
 });
 
-app.get("/login", (req, res) => {
-  const currentUser = users[req.session.user_id];
-  const templateVars = { user: currentUser };
-
-  if (!currentUser) {
-    return res.render("login", templateVars);
-  }
-
-  if (currentUser) {
-    return res.redirect("/urls");
-  }
-});
-
+// Access the register page
 app.get("/register", (req, res) => {
   const currentUser = users[req.session.user_id];
   const templateVars = { user: currentUser };
@@ -207,6 +219,7 @@ app.get("/register", (req, res) => {
   }
 });
 
+// Register a new user. Has some validation in place. Hashes password before storing it.
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     return res.status(400).send('<h3>Email and password must not be blank</h3></br></br><a href="/register">Go Back To Registration Page</a>');
@@ -227,6 +240,21 @@ app.post("/register", (req, res) => {
   }
 });
 
+// Access the login page
+app.get("/login", (req, res) => {
+  const currentUser = users[req.session.user_id];
+  const templateVars = { user: currentUser };
+
+  if (!currentUser) {
+    return res.render("login", templateVars);
+  }
+
+  if (currentUser) {
+    return res.redirect("/urls");
+  }
+});
+
+// Login a user. Verifies password & sets an encrypted cookie in the browser.
 app.post("/login", (req, res) => {
   const currentUserEmail = req.body.userEmail;
   const loginUserId = getUserIdFromEmail(currentUserEmail, users);
@@ -242,11 +270,8 @@ app.post("/login", (req, res) => {
   }
 });
 
+// Logs a user out. Removes cookie from browser.
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
 });
