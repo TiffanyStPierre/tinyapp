@@ -1,3 +1,4 @@
+const { getUserIdFromEmail } = require('./helpers.js');
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -49,16 +50,7 @@ const generateRandomString = function() {
   return randomString;
 };
 
-const getUserIdFromEmail = function(email) {
-  let foundUserId = null;
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      foundUserId = users[userId].id;
-    }
-  }
 
-  return foundUserId;
-};
 
 const urlsForUser = function(id) {
   let userUrlList = [];
@@ -132,7 +124,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     return res.status(400).send('<h3>Email and password must not be blank</h3></br></br><a href="/register">Go Back To Registration Page</a>');
-  } else if (getUserIdFromEmail(req.body.email) !== null) {
+  } else if (getUserIdFromEmail(req.body.email, users) !== null) {
     return res.status(400).send('<h3>Email is already registered. Please login instead.</h3></br></br><a href="/login">Go To Login Page</a>');
   } else {
     const userId = generateRandomString();
@@ -233,7 +225,7 @@ app.get("/u/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const currentUserEmail = req.body.userEmail;
-  const loginUserId = getUserIdFromEmail(currentUserEmail);
+  const loginUserId = getUserIdFromEmail(currentUserEmail, users);
   const hashedPassword = bcrypt.hashSync(req.body.password, 10);
   if (loginUserId === null) {
     return res.status(403).send('<h3>Cannot find a user with that email address. Please enter a valid user email address or register to become a user.</h3></br></br><a href="/login">Go Back To Login Page</a>');
@@ -241,7 +233,7 @@ app.post("/login", (req, res) => {
     if (bcrypt.compareSync(users[loginUserId].password, hashedPassword)) {
       return res.status(403).send('<h3>Invalid password. Please enter a valid password.</h3></br></br><a href="/login">Go Back To Login Page</a>');
     } else if (!bcrypt.compareSync(users[loginUserId].password, hashedPassword)) {
-      const currentUserId = getUserIdFromEmail(currentUserEmail);
+      const currentUserId = getUserIdFromEmail(currentUserEmail, users);
       req.session.user_id = currentUserId;
       res.redirect("/urls");
     }
